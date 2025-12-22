@@ -177,8 +177,8 @@ class CZ_groupby(metrics, scores):
                                 row_id["All"] = "All"
                                 rows.append(row_id)
                                 row_name = {"ID": "FullName"}
-                                for CZ_class_name in CZ_class_names.values():
-                                    row_name[i] = CZ_class_name
+                                for i in range(1, 31):
+                                    row_name[i] = CZ_class_names.get(i, f"CZ_{i}")
                                 row_name["All"] = "Overall"  # Write "Overall" on the second line
                                 rows.append(row_name)
                                 # Calculate and print mean values
@@ -236,8 +236,8 @@ class CZ_groupby(metrics, scores):
 
                                 # ===== Header 2 =====
                                 row_name = {"ID": "FullName"}
-                                for i in range(1, 18):
-                                    row_name[i] = igbp_class_names.get(i, f"IGBP_{i}")
+                                for i in range(1, 31):
+                                    row_name[i] = CZ_class_names.get(i, f"CZ_{i}")
                                 row_name["All"] = "Overall"
                                 rows.append(row_name)
                                 # Calculate and print mean values

@@ -165,8 +165,8 @@ class LC_groupby(metrics, scores):
                                 row_id["All"] = "All"
                                 rows.append(row_id)
                                 row_name = {"ID": "FullName"}
-                                for igbp_class_name in igbp_class_names.values():
-                                    row_name[i] = igbp_class_name
+                                for i in range(1, 18):
+                                    row_name[i] = igbp_class_names.get(i, f"IGBP_{i}")
                                 row_name["All"] = "Overall"  # Write "Overall" on the second line
                                 rows.append(row_name)
                                 # Calculate and print mean values
@@ -210,35 +210,70 @@ class LC_groupby(metrics, scores):
                                                         f'{sim_source}___{ref_source}')
                                 if not os.path.exists(dir_path):
                                     os.makedirs(dir_path)
-                                    output_file_path2 = os.path.join(
-                                        dir_path,
-                                        f'{evaluation_item}_{sim_source}___{ref_source}_scores.csv'
-                                    )
+                                output_file_path2 = os.path.join(
+                                    dir_path,
+                                    f'{evaluation_item}_{sim_source}___{ref_source}_scores.csv'
+                                )
 
-                                    rows = []
-                                    row_id = {"ID": "ID"}
+                                rows = []
+                                row_id = {"ID": "ID"}
+                                for i in range(1, 18):
+                                    row_id[i] = i
+                                row_id["All"] = "All"
+                                rows.append(row_id)
+
+                                # ===== Header 2 =====
+                                row_name = {"ID": "FullName"}
+                                for i in range(1, 18):
+                                    row_name[i] = igbp_class_names.get(i, f"IGBP_{i}")
+                                row_name["All"] = "Overall"
+                                rows.append(row_name)
+                                # Calculate and print mean values
+
+                                for score in self.scores:
+                                    ds = xr.open_dataset(
+                                        f'{self.casedir}/scores/{evaluation_item}_ref_{ref_source}_sim_{sim_source}_{score}.nc')
+                                    ds = Convert_Type.convert_nc(ds)
+                                    row = {"ID": score}
+
+                                    if self.weight.lower() == 'area':
+                                        weights = np.cos(np.deg2rad(ds.lat))
+                                        overall_mean = ds[score].weighted(weights).mean(skipna=True).values
+                                    elif self.weight.lower() == 'mass':
+                                        # Get reference data for flux weighting
+                                        o = xr.open_dataset(f'{self.casedir}/data/{evaluation_item}_ref_{ref_source}_{ref_varname}.nc')[
+                                            f'{ref_varname}']
+
+                                        # Calculate area weights (cosine of latitude)
+                                        area_weights = np.cos(np.deg2rad(ds.lat))
+
+                                        # Calculate absolute flux weights
+                                        flux_weights = np.abs(o.mean('time'))
+
+                                        # Combine area and flux weights
+                                        combined_weights = area_weights * flux_weights
+
+                                        # Normalize weights to sum to 1
+                                        normalized_weights = combined_weights / combined_weights.sum()
+
+                                        # Calculate weighted mean
+                                        overall_mean = ds[score].weighted(normalized_weights.fillna(0)).mean(skipna=True).values
+                                    else:
+                                        overall_mean = ds[score].mean(skipna=True).values
+
+                                    # Calculate and write the overall mean first
+                                    # overall_mean = ds[score].mean(skipna=True).values
+                                    overall_mean_str = f"{overall_mean:.3f}" if not np.isnan(overall_mean) else "N/A"
+
                                     for i in range(1, 18):
-                                        row_id[i] = i
-                                    row_id["All"] = "All"
-                                    rows.append(row_id)
-
-                                    # ===== Header 2 =====
-                                    row_name = {"ID": "FullName"}
-                                    for i in range(1, 18):
-                                        row_name[i] = igbp_class_names.get(i, f"IGBP_{i}")
-                                    row_name["All"] = "Overall"
-                                    rows.append(row_name)
-                                    # Calculate and print mean values
-
-                                    for score in self.scores:
-                                        ds = xr.open_dataset(
-                                            f'{self.casedir}/scores/{evaluation_item}_ref_{ref_source}_sim_{sim_source}_{score}.nc')
-                                        ds = Convert_Type.convert_nc(ds)
-                                        row = {"ID": score}
+                                        ds1 = ds.where(IGBPtype == i)
+                                        igbp_class_name = igbp_class_names.get(i, f"IGBP_{i}")
+                                        ds1.to_netcdf(
+                                            f"{self.casedir}/comparisons/IGBP_groupby/{sim_source}___{ref_source}/{evaluation_item}_ref_{ref_source}_sim_{sim_source}_{score}_IGBP_{igbp_class_name}.nc")
 
                                         if self.weight.lower() == 'area':
                                             weights = np.cos(np.deg2rad(ds.lat))
-                                            overall_mean = ds[score].weighted(weights).mean(skipna=True).values
+                                            mean_value = ds1[score].weighted(weights).mean(skipna=True).values
                                         elif self.weight.lower() == 'mass':
                                             # Get reference data for flux weighting
                                             o = xr.open_dataset(f'{self.casedir}/data/{evaluation_item}_ref_{ref_source}_{ref_varname}.nc')[
@@ -257,49 +292,14 @@ class LC_groupby(metrics, scores):
                                             normalized_weights = combined_weights / combined_weights.sum()
 
                                             # Calculate weighted mean
-                                            overall_mean = ds[score].weighted(normalized_weights.fillna(0)).mean(skipna=True).values
+                                            mean_value = ds1[score].weighted(normalized_weights.fillna(0)).mean(skipna=True).values
                                         else:
-                                            overall_mean = ds[score].mean(skipna=True).values
+                                            mean_value = ds1[score].mean(skipna=True).values
 
-                                        # Calculate and write the overall mean first
-                                        # overall_mean = ds[score].mean(skipna=True).values
-                                        overall_mean_str = f"{overall_mean:.3f}" if not np.isnan(overall_mean) else "N/A"
-
-                                        for i in range(1, 18):
-                                            ds1 = ds.where(IGBPtype == i)
-                                            igbp_class_name = igbp_class_names.get(i, f"IGBP_{i}")
-                                            ds1.to_netcdf(
-                                                f"{self.casedir}/comparisons/IGBP_groupby/{sim_source}___{ref_source}/{evaluation_item}_ref_{ref_source}_sim_{sim_source}_{score}_IGBP_{igbp_class_name}.nc")
-
-                                            if self.weight.lower() == 'area':
-                                                weights = np.cos(np.deg2rad(ds.lat))
-                                                mean_value = ds1[score].weighted(weights).mean(skipna=True).values
-                                            elif self.weight.lower() == 'mass':
-                                                # Get reference data for flux weighting
-                                                o = xr.open_dataset(f'{self.casedir}/data/{evaluation_item}_ref_{ref_source}_{ref_varname}.nc')[
-                                                    f'{ref_varname}']
-
-                                                # Calculate area weights (cosine of latitude)
-                                                area_weights = np.cos(np.deg2rad(ds.lat))
-
-                                                # Calculate absolute flux weights
-                                                flux_weights = np.abs(o.mean('time'))
-
-                                                # Combine area and flux weights
-                                                combined_weights = area_weights * flux_weights
-
-                                                # Normalize weights to sum to 1
-                                                normalized_weights = combined_weights / combined_weights.sum()
-
-                                                # Calculate weighted mean
-                                                mean_value = ds1[score].weighted(normalized_weights.fillna(0)).mean(skipna=True).values
-                                            else:
-                                                mean_value = ds1[score].mean(skipna=True).values
-
-                                            mean_value_str = f"{mean_value:.3f}" if not np.isnan(mean_value) else "N/A"
-                                            row[i] = mean_value_str
-                                        row["All"] = overall_mean_str
-                                        rows.append(row)
+                                        mean_value_str = f"{mean_value:.3f}" if not np.isnan(mean_value) else "N/A"
+                                        row[i] = mean_value_str
+                                    row["All"] = overall_mean_str
+                                    rows.append(row)
                                 df_out = pd.DataFrame(rows)
                                 df_out.to_csv(output_file_path2, index=False)
                                 selected_scores = self.scores
@@ -436,13 +436,13 @@ class LC_groupby(metrics, scores):
                                 rows = []
                                 # Print the table header with an additional column for the overall mean
                                 row_id = {"ID": "ID"}
-                                for i in range(1, 18):
+                                for i in range(1, 16):
                                     row_id[i] = i
                                 row_id["All"] = "All"
                                 rows.append(row_id)
                                 row_name = {"ID": "FullName"}
-                                for PFT_class_name in PFT_class_names.values():
-                                    row_name[i] = PFT_class_name
+                                for i in range(1, 16):
+                                    row_name[i] = PFT_class_names.get(i, f"PFT_{i}")
                                 row_name["All"] = "Overall"  # Write "Overall" on the second line
                                 rows.append(row_name)
                                 # Calculate and print mean values
@@ -493,15 +493,15 @@ class LC_groupby(metrics, scores):
 
                                 rows = []
                                 row_id = {"ID": "ID"}
-                                for i in range(1, 18):
+                                for i in range(1, 16):
                                     row_id[i] = i
                                 row_id["All"] = "All"
                                 rows.append(row_id)
 
                                 # ===== Header 2 =====
                                 row_name = {"ID": "FullName"}
-                                for i in range(1, 18):
-                                    row_name[i] = PFT_class_names.get(i, f"IGBP_{i}")
+                                for i in range(1, 16):
+                                    row_name[i] = PFT_class_names.get(i, f"PFT_{i}")
                                 row_name["All"] = "Overall"
                                 rows.append(row_name)
                                 # Calculate and print mean values
