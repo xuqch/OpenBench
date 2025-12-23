@@ -467,9 +467,9 @@ class LC_groupby(metrics, scores):
                                             f"{self.casedir}/comparisons/PFT_groupby/{sim_source}___{ref_source}/{evaluation_item}_ref_{ref_source}_sim_{sim_source}_{metric}_PFT_{PFT_class_name}.nc")
                                         median_value = ds1[metric].median(skipna=True).values
                                         median_value_str = f"{median_value:.3f}" if not np.isnan(median_value) else "N/A"
-                                    row[i] = median_value_str
-                                row["All"] = overall_median_str
-                                rows.append(row)
+                                        row[i] = median_value_str
+                                    row["All"] = overall_median_str
+                                    rows.append(row)
                                 df_out = pd.DataFrame(rows)
                                 df_out.to_csv(output_file_path, index=False)
                                 selected_metrics = self.metrics
