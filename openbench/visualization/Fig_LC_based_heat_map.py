@@ -20,7 +20,6 @@ def make_LC_based_heat_map(file, selected_metrics, lb, option):
     # Convert the data to a DataFrame
     # read the data from the file using csv, remove the first row, then set the index to the first column
     df = pd.read_csv(file, skiprows=[0,1], header=0)
-    print(df)
     # df = pd.read_csv(file, sep=r'\s+', skiprows=1, header=0)
     df = Convert_Type.convert_Frame(df)
     df.set_index('FullName', inplace=True)
@@ -156,7 +155,6 @@ def make_LC_based_heat_map(file, selected_metrics, lb, option):
         selected_item, sim_source, ref_source = option['item'][0], option['item'][1], option['item'][2]
 
         metric = df_selected.index[0]
-        print(metric)
         import glob
         files = glob.glob(f'{option["path"]}{selected_item}_ref_{ref_source}_sim_{sim_source}_{metric}*.nc')
         datasets = [xr.open_dataset(file) for file in files]
