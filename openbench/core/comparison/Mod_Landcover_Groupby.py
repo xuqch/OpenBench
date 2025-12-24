@@ -436,12 +436,12 @@ class LC_groupby(metrics, scores):
                                 rows = []
                                 # Print the table header with an additional column for the overall mean
                                 row_id = {"ID": "ID"}
-                                for i in range(1, 16):
+                                for i in range(0, 16):
                                     row_id[i] = i
                                 row_id["All"] = "All"
                                 rows.append(row_id)
                                 row_name = {"ID": "FullName"}
-                                for i in range(1, 16):
+                                for i in range(0, 16):
                                     row_name[i] = PFT_class_names.get(i, f"PFT_{i}")
                                 row_name["All"] = "Overall"  # Write "Overall" on the second line
                                 rows.append(row_name)
@@ -493,14 +493,14 @@ class LC_groupby(metrics, scores):
 
                                 rows = []
                                 row_id = {"ID": "ID"}
-                                for i in range(1, 16):
+                                for i in range(0, 16):
                                     row_id[i] = i
                                 row_id["All"] = "All"
                                 rows.append(row_id)
 
                                 # ===== Header 2 =====
                                 row_name = {"ID": "FullName"}
-                                for i in range(1, 16):
+                                for i in range(0, 16):
                                     row_name[i] = PFT_class_names.get(i, f"PFT_{i}")
                                 row_name["All"] = "Overall"
                                 rows.append(row_name)

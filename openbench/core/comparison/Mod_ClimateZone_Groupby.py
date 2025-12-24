@@ -172,7 +172,7 @@ class CZ_groupby(metrics, scores):
                                 rows = []
                                 # Print the table header with an additional column for the overall mean
                                 row_id = {"ID": "ID"}
-                                for i in range(1, 18):
+                                for i in range(1, 31):
                                     row_id[i] = i
                                 row_id["All"] = "All"
                                 rows.append(row_id)
@@ -229,7 +229,7 @@ class CZ_groupby(metrics, scores):
 
                                 rows = []
                                 row_id = {"ID": "ID"}
-                                for i in range(1, 18):
+                                for i in range(1, 31):
                                     row_id[i] = i
                                 row_id["All"] = "All"
                                 rows.append(row_id)
